@@ -3,7 +3,7 @@ import fs from "fs";
 
 export const analyse = async (req, res, next) => {
     try {
-        const genAIClient = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+        const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
         if (!req.file) {
             return res.status(400).json({
@@ -17,10 +17,11 @@ export const analyse = async (req, res, next) => {
         const fsPromises = fs.promises;
         const base64ImageData = await fsPromises.readFile(uploadedImagePath, { encoding: "base64" });
 
-        const aiModel = genAIClient.getGenerativeModel({ model: "gemini-1.5-flash" });
-
-        const aiResponse = await aiModel.generateContent([
-            "Please examine this plant image and provide a detailed evaluation. Identify the species, assess its health status, and suggest appropriate care guidelines. Include information on its distinguishing features, specific care needs, and any fascinating facts related to the plant. Present the response clearly in plain text without using any formatting or special characters.",
+        const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+        
+        const prompt = "Please examine this plant image and provide a detailed evaluation. Identify the species, assess its health status, and suggest appropriate care guidelines. Include information on its distinguishing features, specific care needs, and any fascinating facts related to the plant. Present the response clearly in plain text without using any formatting or special characters."
+        const result = await model.generateContent([
+            prompt,
             {
                 inlineData: {
                     mimeType: req.file.mimetype,
@@ -28,13 +29,14 @@ export const analyse = async (req, res, next) => {
                 },
             },
         ]);
-        if (!aiResponse) {
+
+        if (!result) {
             return res.status(400).json({
                 success: false,
                 message: "An error occurred while retrieving data from the API."
             });
         }
-        const plantAnalysisResult = aiResponse.response.text();
+        const plantAnalysisResult = result.response.text();
 
         await fsPromises.unlink(uploadedImagePath);
 
