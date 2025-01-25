@@ -38,7 +38,7 @@ export const analyse = async (req, res, next) => {
             });
         }
         const plantAnalysisResult = result.response.text();
-        await fs.promises.unlink(uploadedImagePath);
+        fs.unlink(uploadedImagePath);
 
         res.status(200).json({
             success: true,
